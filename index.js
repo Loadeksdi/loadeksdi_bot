@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const Koa = require('koa');
 const cors = require('@koa/cors');
-const router = require('@koa/router');
+//const router = require('@koa/router');
 const koaBody = require('koa-body');
 const ratelimit = require('koa-ratelimit');
 const app = new Koa();
@@ -42,7 +42,7 @@ app.use(async ctx => {
     if (ctx.request.is('application/json')) {
         ctx.status = 200;
         const msg = ctx.request.body.message;
-        user.send(`*[ @ ${JSON.stringify(msg.time)} ]*: ${JSON.stringify(msg.text)}`);
+        user.send(`*${JSON.stringify(msg.author)}* said: ${JSON.stringify(msg.text)}`);
     }
 });
 
