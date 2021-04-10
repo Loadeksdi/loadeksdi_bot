@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  loadeksdi_bot:
+    # ...
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.discord-bridge.rule=Host(`discord-bridge.loadeksdi.com`)
+      - traefik.http.routers.discord-bridge.tls=true
+      - traefik.http.routers.discord-bridge.tls.certresolver=loadeksdiCertResolver

@@ -2,7 +2,6 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const Koa = require('koa');
 const cors = require('@koa/cors');
-//const router = require('@koa/router');
 const koaBody = require('koa-body');
 const ratelimit = require('koa-ratelimit');
 const app = new Koa();
