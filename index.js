@@ -29,6 +29,7 @@ app.use(ratelimit({
 
 const server = require('http').createServer(app.callback());
 const whitelist = ['http://localhost:63342', 'https://loadeksdi.github.io'];
+
 const io = require('socket.io')(server, {
     cors:
         {
@@ -45,7 +46,7 @@ const io = require('socket.io')(server, {
 server.listen(3000);
 let user;
 
-app.use(async (ctx, next) => {
+app.use(async (ctx) => {
     console.log("Access to page OK");
     ctx.body = 'OK';
 });
@@ -58,20 +59,29 @@ client.on('ready', async () => {
 io.on('connection', (socket) => {
     console.log("Connected");
     socket.on('message', async (msg) => {
-        const discordMessage = await user.send(`**${msg.author}** said: ${msg.text}`);
-        sockets.set(discordMessage.id, socket);
+        const guild = await client.guilds.fetch(process.env.GUILD_ID);
+        let channel;
+        if (!sockets.has(socket)){
+            channel = await guild.channels.create(`${msg.author} ${socket.id}`, {type: "text"});
+        }
+        else {
+            channel = sockets.get(socket.id).channel;
+        }
+        await channel.send(msg.text);
+        sockets.set(socket.id, {socket,channel});
+    });
+    io.on('disconnect', async (socket) => {
+        console.log("User disconnected");
+        await sockets.get(socket.id).channel.delete();
     });
 });
 
 client.on('message', async msg => {
-    if (msg.author.bot) {
-        return;
-    }
-    if (msg.author === user && msg.reference) {
+    if (!msg.author.bot && msg.author === user) {
         const messageContent = {
             text: msg.content
         };
-        sockets.get(msg.reference.messageID).emit('message', messageContent);
+        sockets.get(msg.channel.id).emit('message', messageContent);
     }
 });
 
