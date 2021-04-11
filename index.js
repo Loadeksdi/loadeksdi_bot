@@ -67,6 +67,7 @@ io.on('connection', (socket) => {
         else {
             channel = sockets.get(socket.id).channel;
         }
+        console.log(`Channel ${channel.id} created`);
         await channel.send(msg.text);
         sockets.set(socket.id, {socket,channel});
     });
