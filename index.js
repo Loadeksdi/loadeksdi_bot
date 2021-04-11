@@ -33,7 +33,7 @@ const io = require('socket.io')(server, {
     cors:
         {
             origin: function (origin, callback) {
-		console.log(origin);
+		        console.log(origin);
                 if (whitelist.indexOf(origin) !== -1) {
                     callback(null, true)
                 } else {
@@ -44,6 +44,11 @@ const io = require('socket.io')(server, {
 });
 server.listen(3000);
 let user;
+
+app.use(async (ctx, next) => {
+    console.log("Access to page OK");
+    ctx.body = 'OK';
+});
 
 client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
