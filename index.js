@@ -74,15 +74,14 @@ io.on('connection', (socket) => {
         console.log("User disconnected");
         await sockets.get(socket.id).channel.delete();
     });
-});
-
-client.on('message', async msg => {
-    if (!msg.author.bot && msg.author === user) {
-        const messageContent = {
-            text: msg.content
-        };
-        sockets.get(msg.channel.id).emit('message', messageContent);
-    }
+    client.on('message', async msg => {
+        if (!msg.author.bot && msg.author === user) {
+            const messageContent = {
+                text: msg.content
+            };
+            sockets.get(socket.id).emit('message', messageContent);
+        }
+    });
 });
 
 client.login(process.env.BOT_TOKEN);
