@@ -1,9 +1,13 @@
 version: "3"
-
+networks:
+  web:
+    external: true
 services:
   loadeksdi_bot:
     build: .
-    ports:
+    networks:
+      - external
+    expose:
       - "3000"
     labels:
       - traefik.enable=true
