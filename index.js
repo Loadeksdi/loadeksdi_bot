@@ -45,6 +45,7 @@ const io = require('socket.io')(server, {
 });
 server.listen(3000);
 let user;
+let socketId;
 
 app.use(async (ctx) => {
     console.log("Access to page OK");
@@ -59,7 +60,6 @@ client.on('ready', async () => {
 io.on('connection', (socket) => {
     console.log("Connected");
     let channel;
-    let socketId;
     socket.on('message', async (msg) => {
         const guild = await client.guilds.fetch(process.env.GUILD_ID);
         socketId = msg.id;
