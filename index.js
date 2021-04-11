@@ -79,15 +79,16 @@ io.on('connection', (socket) => {
             await channel.delete();
         }
     });
-    client.on('message', async msg => {
-        if (!msg.author.bot && msg.author === user) {
-            const messageContent = {
-                text: msg.content
-            };
-            console.log(`Sending message through ${socketId}`);
-            sockets.get(socketId).socket.emit('message', messageContent);
-        }
-    });
+});
+
+client.on('message', async msg => {
+    if (!msg.author.bot && msg.author === user) {
+        const messageContent = {
+            text: msg.content
+        };
+        console.log(`Sending message through ${socketId}`);
+        sockets.get(socketId).socket.emit('message', messageContent);
+    }
 });
 
 client.login(process.env.BOT_TOKEN);
