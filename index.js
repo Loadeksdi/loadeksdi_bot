@@ -58,30 +58,34 @@ client.on('ready', async () => {
 
 io.on('connection', (socket) => {
     console.log("Connected");
+    let channel;
+    let socketId;
     socket.on('message', async (msg) => {
         const guild = await client.guilds.fetch(process.env.GUILD_ID);
-        let channel;
-        if (!sockets.has(socket.id)){
-            channel = await guild.channels.create(`${msg.author} ${socket.id}`, {type: "text"});
+        socketId = msg.id;
+        if (!sockets.has(socketId)){
+            channel = await guild.channels.create(`${msg.author} ${socketId}`, {type: "text"});
+            console.log(`Channel ${socketId} created`);
+            sockets.set(socketId, {socket,channel});
         }
         else {
-            channel = sockets.get(socket.id).channel;
+            channel = sockets.get(socketId).channel;
         }
-        console.log(`Channel ${channel.id} created`);
         await channel.send(msg.text);
-        sockets.set(socket.id, {socket,channel});
     });
-    io.on('disconnect', async (socket) => {
+    io.on('disconnect', async () => {
         console.log("User disconnected");
-        await sockets.get(socket.id).channel.delete();
+        if (channel){
+            await channel.delete();
+        }
     });
     client.on('message', async msg => {
         if (!msg.author.bot && msg.author === user) {
             const messageContent = {
                 text: msg.content
             };
-            console.log(`Sending message through ${socket.id}`);
-            sockets.get(socket.id).socket.emit('message', messageContent);
+            console.log(`Sending message through ${socketId}`);
+            sockets.get(socketId).socket.emit('message', messageContent);
         }
     });
 });
