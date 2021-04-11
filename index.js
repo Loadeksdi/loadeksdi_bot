@@ -80,8 +80,8 @@ io.on('connection', (socket) => {
             const messageContent = {
                 text: msg.content
             };
-            console.log(`Sending message through ${socket}`);
-            sockets.get(socket.id).emit('message', messageContent);
+            console.log(`Sending message through ${socket.id}`);
+            sockets.get(socket.id).socket.emit('message', messageContent);
         }
     });
 });
