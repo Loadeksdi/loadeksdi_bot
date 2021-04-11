@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
         }
         await channel.send(msg.text);
     });
-    io.on('disconnect', async () => {
+    socket.on('disconnect', async () => {
         console.log("User disconnected");
         if (channel){
             await channel.delete();
