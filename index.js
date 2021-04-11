@@ -28,7 +28,7 @@ app.use(ratelimit({
 }));
 
 const server = require('http').createServer(app.callback());
-const whitelist = ['http://localhost:63342', 'https://loadeksdi.github.io'];
+const whitelist = ['http://localhost:63342', 'https://www.loadeksdi.com', 'https://loadeksdi.com'];
 
 const io = require('socket.io')(server, {
     cors:
