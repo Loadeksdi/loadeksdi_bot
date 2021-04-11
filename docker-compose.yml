@@ -6,7 +6,7 @@ services:
   loadeksdi_bot:
     build: .
     networks:
-      - external
+      - web
     expose:
       - "3000"
     labels:
