@@ -16,4 +16,4 @@ services:
       - traefik.http.routers.discord-bridge.tls=true
       - traefik.http.routers.discord-bridge.tls.certresolver=loadeksdiCertResolver
     restart:
-      - unless-stopped
+      - "unless-stopped"
