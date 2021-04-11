@@ -61,7 +61,7 @@ io.on('connection', (socket) => {
     socket.on('message', async (msg) => {
         const guild = await client.guilds.fetch(process.env.GUILD_ID);
         let channel;
-        if (!sockets.has(socket)){
+        if (!sockets.has(socket.id)){
             channel = await guild.channels.create(`${msg.author} ${socket.id}`, {type: "text"});
         }
         else {
@@ -80,6 +80,7 @@ io.on('connection', (socket) => {
             const messageContent = {
                 text: msg.content
             };
+            console.log(`Sending message through ${socket}`);
             sockets.get(socket.id).emit('message', messageContent);
         }
     });
