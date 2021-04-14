@@ -5,10 +5,11 @@ const Koa = require('koa');
 const cors = require('@koa/cors');
 const koaBody = require('koa-body');
 const ratelimit = require('koa-ratelimit');
-
+const fetch = require('node-fetch');
 const app = new Koa();
 const db = new Map();
 const sockets = new Map();
+const accountsData = [];
 
 app.use(cors());
 app.use(koaBody());
@@ -63,16 +64,22 @@ io.on('connection', (socket) => {
     socket.on('message', async (msg) => {
         const guild = await client.guilds.fetch(process.env.GUILD_ID);
         socketId = msg.id;
-        if (!sockets.has(socketId)){
+        if (!sockets.has(socketId)) {
             channel = await guild.channels.create(`${msg.author} ${socketId}`, {type: "text"});
             console.log(`Channel ${socketId} created`);
-            sockets.set(socketId, {socket,channel});
-        }
-        else {
+            sockets.set(socketId, {socket, channel});
+        } else {
             channel = sockets.get(socketId).channel;
         }
         await channel.send(msg.text);
     });
+    accountsData.forEach(acc => sockets.get(socketId).socket.emit('accinfo', {
+        name: acc.summonerName,
+        tier: acc.tier,
+        rank: acc.rank,
+        lp: acc.leaguePoints,
+        wr: (acc.wins / (acc.wins + acc.losses))
+    }));
     socket.on('disconnect', async () => {
         console.log("User disconnected");
         if (channel){
@@ -91,4 +98,17 @@ client.on('message', async msg => {
     }
 });
 
+function storeLoLData(data) {
+    console.log(data);
+    accountsData.push(data);
+}
+
+function fetchLoLData (name) {
+    fetch(encodeURI(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?api_key=${process.env.RIOT_API_KEY}`)).then(res => res.json()).then(json => {
+        fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${json.id}?api_key=${process.env.RIOT_API_KEY}`).then(res => res.json()).then(json => storeLoLData(json));
+    });
+}
+
+fetchLoLData(process.env.MAIN_ACC);
+fetchLoLData(process.env.SMURF_ACC);
 client.login(process.env.BOT_TOKEN);
