@@ -75,7 +75,7 @@ io.on('connection', async (socket) => {
     });
     await Promise.all([fetchLoLData(process.env.MAIN_ACC),fetchLoLData(process.env.SMURF_ACC)]);
     const data = accountsData.map(acc => ({ name: acc.summonerName, tier: acc.tier, rank: acc.rank, lp: acc.leaguePoints, wr:(acc.wins / (acc.wins + acc.losses))}));
-    sockets.get(socketId).socket.emit('accinfo',data);
+    socket.emit('accinfo',data);
     socket.on('disconnect', async () => {
         console.log("User disconnected");
         if (channel){
