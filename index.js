@@ -58,7 +58,7 @@ client.on('ready', async () => {
     user = await client.users.fetch(process.env.USER_ID);
 });
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
     console.log("Connected");
     let channel;
     socket.on('message', async (msg) => {
@@ -73,13 +73,9 @@ io.on('connection', (socket) => {
         }
         await channel.send(msg.text);
     });
-    accountsData.forEach(acc => sockets.get(socketId).socket.emit('accinfo', {
-        name: acc.summonerName,
-        tier: acc.tier,
-        rank: acc.rank,
-        lp: acc.leaguePoints,
-        wr: (acc.wins / (acc.wins + acc.losses))
-    }));
+    await Promise.all([fetchLoLData(process.env.MAIN_ACC),fetchLoLData(process.env.SMURF_ACC)]);
+    const data = accountsData.map(acc => ({ name: acc.summonerName, tier: acc.tier, rank: acc.rank, lp: acc.leaguePoints, wr:(acc.wins / (acc.wins + acc.losses))}));
+    sockets.get(socketId).socket.emit('accinfo',data);
     socket.on('disconnect', async () => {
         console.log("User disconnected");
         if (channel){
@@ -98,17 +94,12 @@ client.on('message', async msg => {
     }
 });
 
-function storeLoLData(data) {
-    console.log(data);
-    accountsData.push(data);
+async function fetchLoLData (name) {
+    const resFirst = await fetch(encodeURI(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?api_key=${process.env.RIOT_API_KEY}`));
+    const summoner = await resFirst.json();
+    const resSecond = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summoner.id}?api_key=${process.env.RIOT_API_KEY}`);
+    const summonerData = await resSecond.json();
+    accountsData.push(summonerData);
 }
 
-function fetchLoLData (name) {
-    fetch(encodeURI(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${name}?api_key=${process.env.RIOT_API_KEY}`)).then(res => res.json()).then(json => {
-        fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${json.id}?api_key=${process.env.RIOT_API_KEY}`).then(res => res.json()).then(json => storeLoLData(json));
-    });
-}
-
-fetchLoLData(process.env.MAIN_ACC);
-fetchLoLData(process.env.SMURF_ACC);
 client.login(process.env.BOT_TOKEN);
