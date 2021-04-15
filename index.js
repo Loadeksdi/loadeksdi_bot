@@ -58,7 +58,7 @@ client.on('ready', async () => {
     user = await client.users.fetch(process.env.USER_ID);
 });
 
-async function init() {
+async function gatherData(){
     emittableData = (await Promise.all([fetchLoLData(process.env.MAIN_ACC), fetchLoLData(process.env.SMURF_ACC)])).map(acc => ({
         name: acc[0].summonerName,
         tier: acc[0].tier,
@@ -66,6 +66,10 @@ async function init() {
         lp: acc[0].leaguePoints,
         wr: acc[0].wins / (acc[0].wins + acc[0].losses)
     }));
+}
+
+async function init() {
+    setInterval(gatherData,1800);
     server.listen(3000);
 }
 
