@@ -59,15 +59,13 @@ client.on('ready', async () => {
 });
 
 async function init() {
-    const fetchedData = await Promise.all([fetchLoLData(process.env.MAIN_ACC), fetchLoLData(process.env.SMURF_ACC)]);
-    console.log(fetchedData);
-    emittableData = (fetchedData.map(acc => ({
+    emittableData = (await Promise.all([fetchLoLData(process.env.MAIN_ACC), fetchLoLData(process.env.SMURF_ACC)])).map(acc => ({
         name: acc[0].summonerName,
         tier: acc[0].tier,
         rank: acc[0].rank,
         lp: acc[0].leaguePoints,
         wr: acc[0].wins / (acc[0].wins + acc[0].losses)
-    })));
+    }));
     server.listen(3000);
 }
 
