@@ -1,4 +1,4 @@
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config({path: __dirname + '/.env'});
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const Koa = require('koa');
@@ -58,7 +58,7 @@ client.on('ready', async () => {
     user = await client.users.fetch(process.env.USER_ID);
 });
 
-async function gatherData(){
+async function gatherData() {
     emittableData = (await Promise.all([fetchLoLData(process.env.MAIN_ACC), fetchLoLData(process.env.SMURF_ACC)])).map(acc => ({
         name: acc[0].summonerName,
         tier: acc[0].tier,
@@ -69,7 +69,7 @@ async function gatherData(){
 }
 
 async function init() {
-    setInterval(gatherData,1800);
+    setInterval(gatherData, 30 * 60 * 1000);
     server.listen(3000);
 }
 
@@ -78,12 +78,12 @@ io.on('connection', async (socket) => {
     socket.emit('accinfo', emittableData);
     let channel;
     socket.on('message', async (msg) => {
-        const guild = await client.guilds.fetch(process.env.GUILD_ID);
         socketId = msg.id;
         if (!sockets.has(socketId)) {
-            channel = await guild.channels.create(`${msg.author} ${socketId}`, { type: "text" });
+            const guild = await client.guilds.fetch(process.env.GUILD_ID);
+            channel = await guild.channels.create(`${msg.author} ${socketId}`, {type: "text"});
             console.log(`Channel ${socketId} created`);
-            sockets.set(socketId, { socket, channel });
+            sockets.set(socketId, {socket, channel});
         } else {
             channel = sockets.get(socketId).channel;
         }
