@@ -1,7 +1,6 @@
 import {
   Channel,
   ChannelTypes,
-  config,
   startBot,
   WebSocketClient,
   WebSocketServer,
@@ -69,7 +68,7 @@ wss.on("connection", function (ws: WebSocketClient) {
 
 bot.events.ready = async function (bot): Promise<void> {
   console.log("Successfully connected to gateway");
-  categoryChannel = await bot.helpers.createChannel(config().DISCORD_GUILD_ID, {
+  categoryChannel = await bot.helpers.createChannel(Deno.env.get("DISCORD_GUILD_ID") as string, {
     name: "ws-messages",
     type: ChannelTypes.GuildCategory,
   });

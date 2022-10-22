@@ -1,7 +1,7 @@
-import { config, createBot, Intents } from "./deps.ts";
+import { createBot, Intents } from "./deps.ts";
 
 export const bot = createBot({
-  token: config().DISCORD_TOKEN,
+  token: Deno.env.get("DISCORD_TOKEN") as string,
   intents: Intents.Guilds | Intents.GuildMessages | Intents.MessageContent,
   events: {},
 });
