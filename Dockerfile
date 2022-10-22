@@ -13,6 +13,6 @@ RUN deno cache deps.ts --no-check
 
 ADD . .
 # Compile the main app so that it doesn't need to be compiled each startup/entry.
-RUN deno cache main.ts
+RUN deno cache main.ts --no-check
 
 CMD ["run", "--allow-net --allow-read", "main.ts"]
