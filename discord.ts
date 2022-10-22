@@ -1,12 +1,7 @@
-import { Bot, config, createBot, Intents } from "./deps";
+import { config, createBot, Intents } from "./deps.ts";
 
-export const bot: Bot = createBot({
+export const bot = createBot({
   token: config().DISCORD_TOKEN,
-  intents: Intents.Guilds | Intents.GuildMessages | Intents.MessageContent |
-    Intents.GuildChannels,
-  events: {
-    ready() {
-      console.log("Successfully connected to gateway");
-    },
-  },
+  intents: Intents.Guilds | Intents.GuildMessages | Intents.MessageContent,
+  events: {},
 });

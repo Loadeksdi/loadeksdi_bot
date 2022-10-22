@@ -1,52 +1,88 @@
-import { bot } from "./discord";
 import {
-  Bot,
-  DiscordMessage,
+  Channel,
+  ChannelTypes,
+  config,
   startBot,
   WebSocketClient,
   WebSocketServer,
 } from "./deps.ts";
+import { bot } from "./discord.ts";
 
 class Socket {
   id: string;
   socket: WebSocketClient;
+  channel: any;
 
-  constructor(id: string, socket: WebSocketClient) {
+  constructor(id: string, socket: WebSocketClient, channel: any) {
     this.id = id;
     this.socket = socket;
+    this.channel = channel;
   }
 }
 
 interface SocketMessage {
   id: string;
   text: string;
+  nickname: string;
 }
 
 const wss = new WebSocketServer(3000);
 const webSockets: Socket[] = [];
 
+let categoryChannel: Channel;
+
 wss.on("connection", function (ws: WebSocketClient) {
-  ws.on("message", function (message: SocketMessage) {
-    const socketObj = webSockets.find((socket) => socket.id === message.id);
+  ws.on("message", async function (message: string) {
+    console.log(`Received message: ${message}`);
+    const socketMessage: SocketMessage = JSON.parse(message);
+    const socketObj = webSockets.find((socket) =>
+      socket.id === socketMessage.id
+    );
+    const discordMessage: string =
+      `${socketMessage.nickname} says: ${socketMessage.text}`;
     if (!socketObj) {
-      webSockets.push(new Socket(message.id, ws));
-      bot.helpers.channelCreate(bot, message.id);
+      const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
+      const channel = await bot.helpers.createChannel(
+        categoryChannel.guildId,
+        {
+          name: socketId,
+          type: ChannelTypes.GuildText,
+          parentId: categoryChannel.id,
+        },
+      );
+      bot.helpers.sendMessage(channel.id, { content: discordMessage });
+      webSockets.push(new Socket(socketId, ws, channel));
     } else {
-      bot.helpers.messageCreate(bot, message.id, message.text);
+      bot.helpers.sendMessage(socketObj.channel.id, {
+        content: discordMessage,
+      });
     }
-    ws.send(message);
   });
   ws.on("close", function () {
-    bot.helpers.channelDelete();
-    webSockets.splice(webSockets.indexOf(ws), 1);
+    const socketObj = webSockets.find((socket) => socket.socket === ws);
+    if (socketObj) {
+      bot.helpers.deleteChannel(socketObj.channel.id);
+      webSockets.splice(webSockets.indexOf(socketObj), 1);
+    }
   });
 });
 
-bot.events.messageCreate = function (bot: Bot, message: DiscordMessage) {
+bot.events.ready = async function (bot): Promise<void> {
+  console.log("Successfully connected to gateway");
+  categoryChannel = await bot.helpers.createChannel(config().DISCORD_GUILD_ID, {
+    name: "ws-messages",
+    type: ChannelTypes.GuildCategory,
+  });
+};
+
+bot.events.messageCreate = async function (_, message): Promise<void> {
   if (message.isFromBot) return;
-  const socketObj = webSockets.find((socket) => socket.id === message.channel);
+  const socketObj = webSockets.find((socket) =>
+    socket.channel.id === message.channelId
+  );
   if (socketObj) {
-    socketObj.socket.emit("message", message.content);
+    socketObj.socket.send(JSON.stringify({ text: message.content }));
+    console.log(`Sent message: ${message.content}`);
   }
 };
 
