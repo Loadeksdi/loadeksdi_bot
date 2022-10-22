@@ -1,4 +1,4 @@
-FROM denoland/deno:1.10.3
+FROM denoland/deno:latest
 
 EXPOSE 3000
 
@@ -9,10 +9,10 @@ USER deno
 # Cache the dependencies as a layer (the following two steps are re-run only when deps.ts is modified).
 # Ideally cache deps.ts will download and compile _all_ external files used in main.ts.
 COPY deps.ts .
-RUN deno cache deps.ts --no-check
+RUN deno cache deps.ts
 
 ADD . .
 # Compile the main app so that it doesn't need to be compiled each startup/entry.
-RUN deno cache main.ts --no-check
+RUN deno cache main.ts
 
-CMD ["run", "--allow-net", "--allow-env=DISCORD_TOKEN,DISCORD_GUILD_ID", "--allow-read", "--no-check", "main.ts"]
+CMD ["run", "--allow-net", "--allow-env=DISCORD_TOKEN,DISCORD_GUILD_ID", "--allow-read", "main.ts"]
