@@ -15,4 +15,4 @@ ADD . .
 # Compile the main app so that it doesn't need to be compiled each startup/entry.
 RUN deno cache main.ts --no-check
 
-CMD ["run", "--allow-net", "--allow-env", "--allow-read", "--no-check", "main.ts"]
+CMD ["run", "--allow-net", "--allow-env=DISCORD_TOKEN,DISCORD_GUILD_ID", "--allow-read", "--no-check", "main.ts"]
