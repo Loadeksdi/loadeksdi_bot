@@ -1,18 +1,12 @@
-import {
-  Channel,
-  ChannelTypes,
-  startBot,
-  WebSocketClient,
-  WebSocketServer,
-} from "./deps.ts";
+import { Channel, ChannelTypes, startBot } from "./deps.ts";
 import { bot } from "./discord.ts";
 
 class Socket {
   id: string;
-  socket: WebSocketClient;
+  socket: WebSocket;
   channel: any;
 
-  constructor(id: string, socket: WebSocketClient, channel: any) {
+  constructor(id: string, socket: WebSocket, channel: any) {
     this.id = id;
     this.socket = socket;
     this.channel = channel;
@@ -25,49 +19,68 @@ interface SocketMessage {
   nickname: string;
 }
 
-const wss = new WebSocketServer(3000);
 const webSockets: Socket[] = [];
 
 let categoryChannel: Channel;
 
-wss.on("connection", function (ws: WebSocketClient) {
-  ws.on("message", async function (message: string) {
-    console.log(`Received message: ${message}`);
-    const socketMessage: SocketMessage = JSON.parse(message);
-    const socketObj = webSockets.find((socket) =>
-      socket.id === socketMessage.id
+async function handleConn(conn: Deno.Conn) {
+  const httpConn = Deno.serveHttp(conn);
+  for await (const e of httpConn) {
+    e.respondWith(handle(e.request));
+  }
+}
+
+function handle(req: Request) {
+  if (req.headers.get("upgrade") != "websocket") {
+    return new Response("not trying to upgrade as websocket.");
+  }
+  const { socket, response } = Deno.upgradeWebSocket(req);
+  socket.onopen = () => console.log("New socket opened");
+  socket.onmessage = (e: MessageEvent) => {
+    handleMessage(e.data, socket);
+  };
+  socket.onerror = (e: Event) => console.log("Socket error:", e);
+  socket.onclose = () => handleDisconnection(socket);
+  return response;
+}
+
+const handleMessage = async (
+  message: string,
+  socket: WebSocket,
+): Promise<void> => {
+  console.log(`Received message: ${message}`);
+  const socketMessage: SocketMessage = JSON.parse(message);
+  const socketObj = webSockets.find((socket) => socket.id === socketMessage.id);
+  const discordMessage: string =
+    `${socketMessage.nickname} says: ${socketMessage.text}`;
+  if (!socketObj) {
+    const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
+    const channel = await bot.helpers.createChannel(
+      categoryChannel.guildId,
+      {
+        name: socketId,
+        type: ChannelTypes.GuildText,
+        parentId: categoryChannel.id,
+      },
     );
-    const discordMessage: string =
-      `${socketMessage.nickname} says: ${socketMessage.text}`;
-    if (!socketObj) {
-      const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
-      const channel = await bot.helpers.createChannel(
-        categoryChannel.guildId,
-        {
-          name: socketId,
-          type: ChannelTypes.GuildText,
-          parentId: categoryChannel.id,
-        },
-      );
-      bot.helpers.sendMessage(channel.id, { content: discordMessage });
-      webSockets.push(new Socket(socketId, ws, channel));
-    } else {
-      bot.helpers.sendMessage(socketObj.channel.id, {
-        content: discordMessage,
-      });
-    }
-  });
-  ws.on("close", function () {
-    const socketObj = webSockets.find((socket) => socket.socket === ws);
-    if (socketObj) {
-      bot.helpers.deleteChannel(socketObj.channel.id);
-      webSockets.splice(webSockets.indexOf(socketObj), 1);
-    }
-  });
-});
+    bot.helpers.sendMessage(channel.id, { content: discordMessage });
+    webSockets.push(new Socket(socketId, socket, channel));
+  } else {
+    bot.helpers.sendMessage(socketObj.channel.id, {
+      content: discordMessage,
+    });
+  }
+};
+
+const handleDisconnection = (ws: WebSocket): void => {
+  const socketObj = webSockets.find((socket) => socket.socket === ws);
+  if (socketObj) {
+    bot.helpers.deleteChannel(socketObj.channel.id);
+    webSockets.splice(webSockets.indexOf(socketObj), 1);
+  }
+};
 
 bot.events.ready = async function (bot): Promise<void> {
-  console.log("Successfully connected to gateway");
   categoryChannel = await bot.helpers.createChannel(
     Deno.env.get("DISCORD_GUILD_ID") as string,
     {
@@ -75,6 +88,7 @@ bot.events.ready = async function (bot): Promise<void> {
       type: ChannelTypes.GuildCategory,
     },
   );
+  console.log("Successfully connected to gateway");
 };
 
 bot.events.messageCreate = async function (_, message): Promise<void> {
@@ -89,3 +103,13 @@ bot.events.messageCreate = async function (_, message): Promise<void> {
 };
 
 await startBot(bot);
+
+const port = Deno.env.get("PORT");
+
+if (port) {
+  const listener = Deno.listen({ port: Number(port) });
+  console.log(`Listening on port ${port}`);
+  for await (const conn of listener) {
+    handleConn(conn);
+  }
+}
