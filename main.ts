@@ -1,3 +1,4 @@
+import { serve } from "https://deno.land/std@0.159.0/http/server.ts";
 import {
   Channel,
   ChannelTypes,
@@ -68,10 +69,13 @@ wss.on("connection", function (ws: WebSocketClient) {
 
 bot.events.ready = async function (bot): Promise<void> {
   console.log("Successfully connected to gateway");
-  categoryChannel = await bot.helpers.createChannel(Deno.env.get("DISCORD_GUILD_ID") as string, {
-    name: "ws-messages",
-    type: ChannelTypes.GuildCategory,
-  });
+  categoryChannel = await bot.helpers.createChannel(
+    Deno.env.get("DISCORD_GUILD_ID") as string,
+    {
+      name: "ws-messages",
+      type: ChannelTypes.GuildCategory,
+    },
+  );
 };
 
 bot.events.messageCreate = async function (_, message): Promise<void> {
@@ -86,3 +90,11 @@ bot.events.messageCreate = async function (_, message): Promise<void> {
 };
 
 await startBot(bot);
+
+const port = 8080;
+
+const handler = (_: Request): Response => {
+  return new Response("Hello, world!", { status: 200 });
+};
+
+await serve(handler, { port });
