@@ -50,11 +50,11 @@ const handleMessage = async (
 ): Promise<void> => {
   console.log(`Received message: ${message}`);
   const socketMessage: SocketMessage = JSON.parse(message);
-  const socketObj = webSockets.find((socket) => socket.id === socketMessage.id);
+  const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
+  const socketObj = webSockets.find((socket) => socket.id === socketId);
   const discordMessage: string =
     `${socketMessage.nickname} says: ${socketMessage.text}`;
   if (!socketObj) {
-    const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
     const channel = await bot.helpers.createChannel(
       categoryChannel.guildId,
       {
