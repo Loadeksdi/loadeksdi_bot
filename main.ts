@@ -91,7 +91,7 @@ bot.events.messageCreate = async function (_, message): Promise<void> {
 
 await startBot(bot);
 
-const port = 8080;
+const port = 3000;
 
 const handler = (_: Request): Response => {
   return new Response("Hello, world!", { status: 200 });
