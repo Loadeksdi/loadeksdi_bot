@@ -15,5 +15,4 @@ services:
       - traefik.http.routers.discord-bridge.rule=Host(`discord-bridge.loadeksdi.com`)
       - traefik.http.routers.discord-bridge.tls=true
       - traefik.http.routers.discord-bridge.tls.certresolver=loadeksdiCertResolver
-    restart:
-      - "unless-stopped"
+    restart: "unless-stopped"

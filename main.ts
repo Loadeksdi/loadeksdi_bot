@@ -40,7 +40,7 @@ function handle(req: Request) {
     handleMessage(e.data, socket);
   };
   socket.onerror = (e: Event) => console.log("Socket error:", e);
-  socket.onclose = () => console.log("Socket closed");
+  socket.onclose = () => handleDisconnection(socket);
   return response;
 }
 
@@ -50,24 +50,33 @@ const handleMessage = async (
 ): Promise<void> => {
   console.log(`Received message: ${message}`);
   const socketMessage: SocketMessage = JSON.parse(message);
-  const socketObj = webSockets.find((socket) => socket.id === socketMessage.id);
+  const socketId: string = `${socketMessage.nickname}-${socketMessage.id}`;
+  const socketObj = webSockets.find((socket) => socket.id === socketId);
   const discordMessage: string =
     `${socketMessage.nickname} says: ${socketMessage.text}`;
   if (!socketObj) {
     const channel = await bot.helpers.createChannel(
       categoryChannel.guildId,
       {
-        name: `${socketMessage.nickname}-${socketMessage.id}`,
+        name: socketId,
         type: ChannelTypes.GuildText,
         parentId: categoryChannel.id,
       },
     );
     bot.helpers.sendMessage(channel.id, { content: discordMessage });
-    webSockets.push(new Socket(socketMessage.id, socket, channel));
+    webSockets.push(new Socket(socketId, socket, channel));
   } else {
     bot.helpers.sendMessage(socketObj.channel.id, {
       content: discordMessage,
     });
+  }
+};
+
+const handleDisconnection = (ws: WebSocket): void => {
+  const socketObj = webSockets.find((socket) => socket.socket === ws);
+  if (socketObj) {
+    bot.helpers.deleteChannel(socketObj.channel.id);
+    webSockets.splice(webSockets.indexOf(socketObj), 1);
   }
 };
 
