@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.159.0/http/server.ts";
 import {
   Channel,
   ChannelTypes,
@@ -90,11 +89,3 @@ bot.events.messageCreate = async function (_, message): Promise<void> {
 };
 
 await startBot(bot);
-
-const port = 3000;
-
-const handler = (_: Request): Response => {
-  return new Response("Hello, world!", { status: 200 });
-};
-
-await serve(handler, { port });
